@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "lsf.github-action.security-fork.v1",
+  "upstreamRepository": "actions/download-artifact",
+  "upstreamRevision": "9000827ccba6bdab643e8b6fd33ac0654aef8333",
+  "upstreamTag": "v8.0.2",
+  "runtime": "node24",
+  "nodeBuild": "24.19.0",
+  "dependencyOverrides": {
+    "@isaacs/brace-expansion@5": "5.0.1",
+    "brace-expansion@2": "2.1.7",
+    "fast-xml-parser@5": "5.11.2",
+    "minimatch@9": "9.0.9",
+    "lodash@4": "4.18.1",
+    "minimatch@10": "10.2.6",
+    "minimatch@5": "5.1.9",
+    "undici@6": "6.29.1"
+  },
+  "productionPackages": 150,
+  "osvFindingCount": 0,
+  "validation": {
+    "name": "download-artifact",
+    "node": "v24.19.0",
+    "calls": [
+      {
+        "stage": "lock",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "install",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "types",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "bundle",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "stage": "test",
+        "status": 0,
+        "signal": null
+      }
+    ],
+    "status": 0
+  },
+  "upstreamTests": [
+    "Test Suites: 1 passed, 1 total",
+    "Tests:       21 passed, 21 total",
+    "Snapshots:   0 total",
+    "Time:        2.691 s"
+  ],
+  "bundles": {
+    "dist/index.js": {
+      "bytes": 4683478,
+      "sha256": "4cc9c30a454d94c99f67efc6d129bed44a1958f11a8a97f5606499d67279ae80"
+    },
+    "dist/package.json": {
+      "bytes": 23,
+      "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a"
+    }
+  }
+}
