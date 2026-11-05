@@ -1,0 +1,78 @@
+name: LSF download security owner
+on:
+  push:
+    branches: [diag/download-action-security-owner-20261105]
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SOURCE_COMMIT: 39d52ac2a2c6731c2d836e923b5221ebd0d4d8e9
+      SOURCE_TREE: ab1166196538fbdab37cd72ca51557320ae95d35
+    steps:
+      - uses: KirilsTurkins/lsf-checkout@4d310727149d3abacc52b5dcb0a1c4d18b345d13
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Authenticate candidate and diagnostic-only child
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$SOURCE_COMMIT"
+          test "$(git rev-parse "${SOURCE_COMMIT}^{tree}")" = "$SOURCE_TREE"
+          test "$(git diff --name-only "$SOURCE_COMMIT" HEAD)" = .github/workflows/lsf-download-security-owner.yml
+      - uses: KirilsTurkins/lsf-setup-node@34275fdec80b5be172c3327cadef76aa2f3b31c6
+        with:
+          node-version: 24.19.0
+      - name: Install exact graph and verify sources
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = v24.19.0
+          test "$(npm --version)" = 11.17.0
+          npm ci --ignore-scripts --no-audit --no-fund
+          node --test .lsf-source/download-source.test.mjs
+      - name: Run action tests and compare rebuilt bundle
+        run: |
+          set -euo pipefail
+          npm test -- --runInBand
+          npm run build
+          npm run release
+          git diff --exit-code "$SOURCE_COMMIT" -- dist
+      - name: Prepare real download input and evidence
+        run: |
+          set -euo pipefail
+          mkdir -p target/lsf-download-owner/input target/lsf-download-owner/evidence
+          printf 'download source repair verified\n' > target/lsf-download-owner/input/marker.txt
+          node .lsf-source/verify-download-sources.mjs > target/lsf-download-owner/evidence/installed.json
+          cp action.yml package.json package-lock.json target/lsf-download-owner/evidence/
+          cp -a .lsf-source target/lsf-download-owner/evidence/
+          mkdir -p target/lsf-download-owner/evidence/dist
+          cp dist/index.js target/lsf-download-owner/evidence/dist/
+          git rev-parse HEAD "$SOURCE_COMMIT" "${SOURCE_COMMIT}^{tree}" > target/lsf-download-owner/evidence/source-identities.txt
+          node --version > target/lsf-download-owner/evidence/node.txt
+          npm --version > target/lsf-download-owner/evidence/npm.txt
+          (cd target/lsf-download-owner/evidence && find . -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/lsf-download-owner-sha256.txt)
+          cp /tmp/lsf-download-owner-sha256.txt target/lsf-download-owner/evidence/SHA256SUMS
+      - name: Upload real input artifact
+        uses: KirilsTurkins/lsf-upload-artifact@d74a697ce553b389f4219545e07c97fb8542c64f
+        with:
+          name: lsf-download-owner-marker
+          path: target/lsf-download-owner/input/marker.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: Download artifact with candidate
+        uses: ./
+        with:
+          name: lsf-download-owner-marker
+          path: target/lsf-download-owner/download
+      - name: Verify downloaded bytes
+        run: cmp target/lsf-download-owner/input/marker.txt target/lsf-download-owner/download/marker.txt
+      - name: Preserve source and runtime evidence
+        uses: KirilsTurkins/lsf-upload-artifact@d74a697ce553b389f4219545e07c97fb8542c64f
+        with:
+          name: lsf-download-owner-evidence
+          path: target/lsf-download-owner/evidence/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
